@@ -51,6 +51,8 @@ module.exports = {
   cascades: [ 'requirements' ],
   options: {
     alias: 'login',
+    cosmosDb: Boolean(process.env.AZURE_COSMOS_DB) || false,
+    ttlKey: Boolean(process.env.AZURE_COSMOS_DB) ? '_ts' : 'expires',
     localLogin: true,
     scene: 'apos',
     csrfExceptions: [
@@ -210,11 +212,10 @@ module.exports = {
           try {
 
             await requirement.verify(req, req.body.value, user);
-
             const token = await self.bearerTokens.findOne({
               _id: self.apos.launder.string(req.body.incompleteToken),
               requirementsToVerify: { $exists: true },
-              expires: {
+              [self.options.ttlKey]: {
                 $gte: new Date()
               }
             });
@@ -502,7 +503,7 @@ module.exports = {
 
       async enableBearerTokens() {
         self.bearerTokens = self.apos.db.collection('aposBearerTokens');
-        await self.bearerTokens.createIndex({ expires: 1 }, { expireAfterSeconds: 0 });
+        await self.bearerTokens.createIndex({ [self.options.ttlKey]: 1 }, { expireAfterSeconds: 0 });
       },
 
       // Finalize an incomplete login based on the provided incompleteToken
@@ -517,7 +518,7 @@ module.exports = {
           requirementsToVerify: {
             $exists: true
           },
-          expires: {
+          [self.options.ttlKey]: {
             $gte: new Date()
           }
         });
@@ -567,7 +568,7 @@ module.exports = {
             $exists: true,
             $ne: []
           },
-          expires: {
+          [self.options.ttlKey]: {
             $gte: new Date()
           }
         });
@@ -634,7 +635,7 @@ module.exports = {
               requirementsToVerify,
               // Default lifetime of 1 hour is generous to permit situations like
               // installing a TOTP app for the first time
-              expires: new Date(new Date().getTime() + (self.options.incompleteLifetime || 60 * 60 * 1000))
+              [self.options.ttlKey]: new Date(new Date().getTime() + (self.options.incompleteLifetime || 60 * 60 * 1000))
             });
 
             await self.clearLoginAttempts(user.username);
@@ -654,7 +655,7 @@ module.exports = {
             await self.bearerTokens.insert({
               _id: token,
               userId: user._id,
-              expires: new Date(new Date().getTime() + (self.options.bearerTokens.lifetime || (86400 * 7 * 2)) * 1000)
+              [self.options.ttlKey]: new Date(new Date().getTime() + (self.options.bearerTokens.lifetime || (86400 * 7 * 2)) * 1000)
             });
 
             await self.clearLoginAttempts(user.username);

@@ -11,7 +11,11 @@
 // store data.
 
 module.exports = {
-  options: { alias: 'cache' },
+  options: {
+    alias: 'cache',
+    cosmosDb: Boolean(process.env.AZURE_COSMOS_DB) || false,
+    ttlKey: Boolean(process.env.AZURE_COSMOS_DB) ? '_ts' : 'expires'
+  },
   async init(self) {
     await self.enableCollection();
   },
@@ -31,9 +35,10 @@ module.exports = {
         }
         // MongoDB's expireAfterSeconds mechanism isn't instantaneous, so we
         // should still enforce this at get() time
-        if (item.expires && item.expires < new Date()) {
+        if (item[self.options.ttlKey] && item[self.options.ttlKey] < new Date()) {
           return undefined;
         }
+
         return item.value;
       },
 
@@ -61,9 +66,9 @@ module.exports = {
         action.$set = set;
         const unset = {};
         if (lifetime) {
-          set.expires = new Date(new Date().getTime() + lifetime * 1000);
+          set[self.options.ttlKey] = new Date(new Date().getTime() + lifetime * 1000);
         } else {
-          unset.expires = 1;
+          unset[self.options.ttlKey] = 1;
           action.$unset = unset;
         }
         await self.cacheCollection.updateOne({
@@ -84,11 +89,17 @@ module.exports = {
 
       async enableCollection() {
         self.cacheCollection = await self.apos.db.collection('aposCache');
-        await self.cacheCollection.createIndex({
-          namespace: 1,
-          key: 1
-        }, { unique: true });
-        await self.cacheCollection.createIndex({ expires: 1 }, { expireAfterSeconds: 0 });
+        await self.cacheCollection.createIndex(
+          {
+            namespace: 1,
+            key: 1
+          },
+          { unique: true }
+        );
+        await self.cacheCollection.createIndex(
+          { [self.options.ttlKey]: 1 },
+          { expireAfterSeconds: 0 }
+        );
       }
 
     };

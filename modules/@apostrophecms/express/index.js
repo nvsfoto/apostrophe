@@ -158,6 +158,10 @@ const cors = require('cors');
 const Promise = require('bluebird');
 
 module.exports = {
+  options: {
+    cosmosDb: Boolean(process.env.AZURE_COSMOS_DB) || false,
+    ttlKey: Boolean(process.env.AZURE_COSMOS_DB) ? '_ts' : 'expires',
+  },
   init(self) {
     self.createApp();
     self.prefix();
@@ -329,9 +333,10 @@ module.exports = {
           // The expireAfterSeconds feature of mongodb
           // is not instantaneous so we should check
           // "expires" ourselves too
+
           const bearer = await self.apos.login.bearerTokens.findOne({
             _id: req.token,
-            expires: { $gte: new Date() },
+            [self.options.ttlKey]: { $gte: new Date() },
             // requirementsToVerify array should be empty or inexistant
             // for the token to be usable to log in.
             $or: [
