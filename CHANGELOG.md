@@ -1,6 +1,6 @@
 # Changelog
 
-## UNRELEASED
+## 3.30.0 (2022-10-12)
 
 ### Adds
 
@@ -9,6 +9,7 @@
 
 ### Fixes
 
+* Vue 3 may now be used in a separate webpack build at project level without causing problems for the admin UI Vue 2 build.
 * Fixes `cache` module `clear-cache` CLI task message
 * Fixes help message for `express` module `list-routes` CLI task
 
