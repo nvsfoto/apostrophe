@@ -27,7 +27,7 @@ module.exports = {
   options: {
     alias: 'doc',
     advisoryLockTimeout: 15,
-    cosmosDb: Boolean(process.env.AZURE_COSMOS_DB) || false,
+    cosmosDb: process.env.AZURE_COSMOS_DB || false
   },
   async init(self) {
     self.managers = {};
@@ -342,8 +342,10 @@ module.exports = {
           aposLocale: 1
         }, {});
         await self.db.createIndex({ 'advisoryLock._id': 1 }, {});
-        //condition - Cosmos DB don't support text indexes - we need to turn it off for compatibility
-        if(!self.options.cosmosDb) await self.createTextIndex();
+        // condition - Cosmos DB don't support text indexes - we need to turn it off for compatibility
+        if (!self.options.cosmosDb) {
+          await self.createTextIndex();
+        };
         await self.db.createIndex({ parkedId: 1 }, {});
         await self.db.createIndex({
           submitted: 1,

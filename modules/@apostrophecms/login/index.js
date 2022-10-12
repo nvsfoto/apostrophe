@@ -51,8 +51,8 @@ module.exports = {
   cascades: [ 'requirements' ],
   options: {
     alias: 'login',
-    cosmosDb: Boolean(process.env.AZURE_COSMOS_DB) || false,
-    ttlKey: Boolean(process.env.AZURE_COSMOS_DB) ? '_ts' : 'expires',
+    cosmosDb: process.env.AZURE_COSMOS_DB || false,
+    ttlKey: process.env.AZURE_COSMOS_DB ? '_ts' : 'expires',
     localLogin: true,
     scene: 'apos',
     csrfExceptions: [
