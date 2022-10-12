@@ -13,8 +13,8 @@
 module.exports = {
   options: {
     alias: 'cache',
-    cosmosDb: Boolean(process.env.AZURE_COSMOS_DB) || false,
-    ttlKey: Boolean(process.env.AZURE_COSMOS_DB) ? '_ts' : 'expires'
+    cosmosDb: process.env.AZURE_COSMOS_DB || false,
+    ttlKey: process.env.AZURE_COSMOS_DB ? '_ts' : 'expires'
   },
   async init(self) {
     await self.enableCollection();
