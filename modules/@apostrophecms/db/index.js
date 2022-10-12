@@ -54,7 +54,8 @@ const escapeHost = require('../../../lib/escape-host');
 
 module.exports = {
   options: {
-    versionCheck: true
+    versionCheck: true,
+    cosmosDb: Boolean(process.env.AZURE_COSMOS_DB) || false,
   },
   async init(self) {
     await self.connectToMongo();
